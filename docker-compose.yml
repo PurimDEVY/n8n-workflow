@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: ${N8N_IMAGE:-n8nio/n8n:latest}
+    platform: linux/arm64
+    env_file:
+      - .env
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    # If you run behind a reverse proxy, remove the ports mapping and set
+    # N8N_PROTOCOL=https and WEBHOOK_URL appropriately in the .env file.
+
+volumes:
+  n8n_data:
+    driver: local
+
+

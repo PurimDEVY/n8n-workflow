@@ -1,0 +1,19 @@
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Node/build
+node_modules/
+dist/
+*.log
+
+# Docker
+docker-compose.override.yml
+
+
