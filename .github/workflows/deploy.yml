@@ -80,17 +80,27 @@ jobs:
               echo "docker-compose.yml missing" >&2; exit 1
             fi
             echo "${{ secrets.OCIR_TOKEN }}" | docker login ${{ secrets.OCIR_REGISTRY_URL }} -u "${{ secrets.OCIR_TENANCY_NAMESPACE }}/Default/${{ secrets.OCIR_USERNAME }}" --password-stdin
+            # Derive sane defaults when domain is not available
+            PUBLIC_IP="${N8N_HOST:-}"
+            if [ -z "$PUBLIC_IP" ]; then
+              PUBLIC_IP="$(curl -fsS http://checkip.amazonaws.com || curl -fsS https://ifconfig.me || hostname -I | awk '{print $1}')"
+            fi
+            PROTO="${N8N_PROTOCOL:-http}"
+            PORT="${N8N_PORT:-5678}"
+            HOST="${N8N_HOST:-$PUBLIC_IP}"
+            WEBHOOK="${WEBHOOK_URL:-$PROTO://$HOST:$PORT}"
+
             cat > .env << EOF
             N8N_IMAGE=${{ secrets.OCIR_REGISTRY_URL }}/${{ secrets.OCIR_TENANCY_NAMESPACE }}/n8n:latest
-            N8N_HOST=${N8N_HOST:-}
-            N8N_PORT=${N8N_PORT:-5678}
-            N8N_PROTOCOL=${N8N_PROTOCOL:-http}
-            WEBHOOK_URL=${WEBHOOK_URL:-}
+            N8N_HOST=$HOST
+            N8N_PORT=$PORT
+            N8N_PROTOCOL=$PROTO
+            WEBHOOK_URL=$WEBHOOK
             GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-UTC}
             N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-}
             N8N_BASIC_AUTH_ACTIVE=true
-            N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-            N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+            N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+            N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-change_me}
             N8N_DIAGNOSTICS_ENABLED=false
             N8N_TELEMETRY_ENABLED=false
             N8N_PERSONALIZATION_ENABLED=false
@@ -99,5 +109,6 @@ jobs:
             docker compose pull
             docker compose up -d
             docker compose ps
+            echo "n8n URL: $WEBHOOK"
 
 
