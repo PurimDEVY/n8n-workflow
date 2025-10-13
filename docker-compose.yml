@@ -5,7 +5,7 @@ services:
     image: ${N8N_IMAGE:-n8nio/n8n:latest}
     platform: linux/arm64
     env_file:
-      - .env.local
+      - .env
     ports:
       - "${N8N_PORT:-5678}:5678"
     volumes:
