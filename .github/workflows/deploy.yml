@@ -57,6 +57,17 @@ jobs:
           source: "docker-compose.yml"
           target: "~/n8n-workflow"
 
+      - name: Copy workflows to server (if any)
+        if: ${{ hashFiles('workflows/**') != '' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: "workflows"
+          target: "~/n8n-workflow"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -110,6 +121,12 @@ jobs:
             "NODE_ENV=production" > .env
             docker compose pull
             docker compose up -d
+            # Import workflows if provided
+            if [ -d workflows ] && ls workflows/*.json >/dev/null 2>&1; then
+              CID=$(docker compose ps -q n8n)
+              docker cp workflows "$CID":/home/node/workflows
+              docker exec "$CID" n8n import:workflow --input /home/node/workflows --separate --overwrite
+            fi
             docker compose ps
             echo "n8n URL: $WEBHOOK"
 
